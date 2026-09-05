@@ -171,6 +171,16 @@
   .toggle-dir button{border:none; background:var(--paper); padding:7px 12px; font-size:12.5px; cursor:pointer; color:var(--ink-soft);}
   .toggle-dir button.on{background:var(--ink); color:var(--paper);}
 
+  /* Word of the day */
+  .wotd-card{
+    border:1px solid var(--gold); background:var(--paper-2); padding:20px 22px; margin-bottom:24px;
+    display:flex; align-items:center; justify-content:space-between; gap:16px; flex-wrap:wrap;
+  }
+  .wotd-label{font-size:11px; color:var(--gold); text-transform:uppercase; letter-spacing:0.08em; margin-bottom:8px;}
+  .wotd-kr{font-family:'Noto Serif KR', serif; font-size:34px; line-height:1.1;}
+  .wotd-rom{font-size:13px; color:var(--ink-soft); margin-top:4px;}
+  .wotd-en{font-family:'Song Myung', serif; font-weight:400; font-size:19px; color:var(--celadon-dark); margin-top:4px;}
+
   /* Translator */
   .papago-wrap{
     width:100vw; margin-left:calc(50% - 50vw); margin-right:calc(50% - 50vw);
@@ -478,6 +488,15 @@ function setMusicVolume(v){
 }
 
 function todayStr(){ return new Date().toISOString().slice(0,10); }
+function cstDateStr(){
+  return new Intl.DateTimeFormat('en-CA', { timeZone:'America/Chicago', year:'numeric', month:'2-digit', day:'2-digit' }).format(new Date());
+}
+function wordOfTheDay(){
+  const [y,m,d] = cstDateStr().split('-').map(Number);
+  const dayNum = Math.floor(Date.UTC(y, m-1, d) / 86400000);
+  const idx = ((dayNum % VOCAB.length) + VOCAB.length) % VOCAB.length;
+  return VOCAB[idx];
+}
 function shuffle(arr){ return [...arr].sort(()=>Math.random()-0.5); }
 function sample(arr,n){ return shuffle(arr).slice(0,n); }
 
@@ -720,9 +739,19 @@ function achievementsHTML(){
 }
 
 function dashboardHTML(bc){
+  const wotd = wordOfTheDay();
   return `
     <h2 class="section-title">Welcome back${state.streak>1?', '+state.streak+' days in a row':''}</h2>
     <p class="section-sub">Pick up where you left off, or start something new.</p>
+    <div class="wotd-card">
+      <div>
+        <div class="wotd-label">Word of the day</div>
+        <div class="wotd-kr">${wotd.kr}</div>
+        <div class="wotd-rom">${wotd.rom}</div>
+        <div class="wotd-en">${wotd.en}</div>
+      </div>
+      <button class="icon-btn" data-say="${encodeURIComponent(wotd.kr)}" aria-label="Play pronunciation">&#9658;</button>
+    </div>
     <div style="display:grid; gap:12px;">
       <div style="border:1px solid var(--line); padding:16px 18px; display:flex; justify-content:space-between; align-items:center; gap:12px; flex-wrap:wrap;">
         <div>
@@ -1042,6 +1071,15 @@ function wireDynamic(){
     btn.onclick = (e)=>{ e.stopPropagation(); speakKorean(decodeURIComponent(btn.dataset.say)); };
   });
 }
+
+let wotdDateCache = cstDateStr();
+setInterval(()=>{
+  const nowDs = cstDateStr();
+  if(nowDs !== wotdDateCache){
+    wotdDateCache = nowDs;
+    if(view==='dashboard') render();
+  }
+}, 60000);
 
 loadState();
 </script>
