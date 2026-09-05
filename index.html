@@ -178,6 +178,7 @@
   }
   .translate-box:focus{outline:none; border-color:var(--ink-soft);}
   .translate-note{text-align:center; font-size:12px; color:var(--ink-soft); margin-top:10px;}
+  .papago-frame{width:100%; height:520px; border:1px solid var(--line); margin-top:18px;}
 
   /* Sentences & Grammar */
   .phrase-row{
@@ -504,7 +505,7 @@ let flashIdx = 0;
 let flashFlipped = false;
 let quizSession = null;
 let revealedPhrases = {};
-let translateState = { text:'', dir:'ko-en' };
+let translateState = { text:'', dir:'ko-en', showFrame:false };
 
 async function loadState(){
   try{
@@ -948,11 +949,17 @@ function quizHTML(){
   `;
 }
 
+function papagoUrl(){
+  const sk = translateState.dir==='ko-en' ? 'ko' : 'en';
+  const tk = translateState.dir==='ko-en' ? 'en' : 'ko';
+  return `https://papago.naver.com/?sk=${sk}&tk=${tk}&st=${encodeURIComponent(translateState.text.trim())}`;
+}
+
 function translatorHTML(){
   const dir = translateState.dir;
   return `
     <h2 class="section-title">Translator</h2>
-    <p class="section-sub">Type a word or sentence, then open it in Naver Papago for a full translation.</p>
+    <p class="section-sub">Type a word or sentence and translate it right here, powered by Naver Papago.</p>
     <div class="row-between">
       <p class="section-sub" style="margin:0;">Direction</p>
       <div class="toggle-dir">
@@ -962,9 +969,9 @@ function translatorHTML(){
     </div>
     <textarea id="translate-input" class="translate-box" placeholder="${dir==='ko-en' ? 'Type Korean here...' : 'Type English here...'}">${translateState.text}</textarea>
     <div style="text-align:center; margin-top:18px;">
-      <button class="btn-main" id="open-papago">Translate with Naver Papago</button>
+      <button class="btn-main" id="open-papago">Translate</button>
     </div>
-    <p class="translate-note">Opens papago.naver.com in a new tab with your text pre-filled.</p>
+    ${translateState.showFrame ? `<iframe id="papago-frame" class="papago-frame" src="${papagoUrl()}" title="Naver Papago translation"></iframe>` : ''}
   `;
 }
 
@@ -991,16 +998,13 @@ function wireDynamic(){
   if(g('quiz-again')) g('quiz-again').onclick = ()=>{ quizSession=null; render(); };
   if(g('quiz-replay')) g('quiz-replay').onclick = ()=>{ const q=quizSession.questions[quizSession.idx]; speakKorean(q.word.kr); };
 
-  if(g('tr-dir-ko-en')) g('tr-dir-ko-en').onclick = ()=>{ translateState.dir='ko-en'; render(); };
-  if(g('tr-dir-en-ko')) g('tr-dir-en-ko').onclick = ()=>{ translateState.dir='en-ko'; render(); };
+  if(g('tr-dir-ko-en')) g('tr-dir-ko-en').onclick = ()=>{ translateState.dir='ko-en'; if(translateState.showFrame) translateState.showFrame=false; render(); };
+  if(g('tr-dir-en-ko')) g('tr-dir-en-ko').onclick = ()=>{ translateState.dir='en-ko'; if(translateState.showFrame) translateState.showFrame=false; render(); };
   if(g('translate-input')) g('translate-input').oninput = (e)=>{ translateState.text = e.target.value; };
   if(g('open-papago')) g('open-papago').onclick = ()=>{
-    const text = translateState.text.trim();
-    if(!text) return;
-    const sk = translateState.dir==='ko-en' ? 'ko' : 'en';
-    const tk = translateState.dir==='ko-en' ? 'en' : 'ko';
-    const url = `https://papago.naver.com/?sk=${sk}&tk=${tk}&st=${encodeURIComponent(text)}`;
-    window.open(url, '_blank', 'noopener');
+    if(!translateState.text.trim()) return;
+    translateState.showFrame = true;
+    render();
   };
 
   if(g('voice-select')) g('voice-select').onchange = (e)=>{ state.voiceURI = e.target.value; saveState(); };
