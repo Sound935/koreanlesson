@@ -172,13 +172,7 @@
   .toggle-dir button.on{background:var(--ink); color:var(--paper);}
 
   /* Translator */
-  .translate-box{
-    width:100%; min-height:130px; padding:14px; border:1px solid var(--line);
-    background:var(--paper-2); color:var(--ink); font-family:'Work Sans'; font-size:15px; resize:vertical;
-  }
-  .translate-box:focus{outline:none; border-color:var(--ink-soft);}
-  .translate-note{text-align:center; font-size:12px; color:var(--ink-soft); margin-top:10px;}
-  .papago-frame{width:100%; height:520px; border:1px solid var(--line); margin-top:18px;}
+  .papago-frame{width:100%; height:360px; border:1px solid var(--line); margin-top:18px;}
 
   /* Sentences & Grammar */
   .phrase-row{
@@ -505,7 +499,7 @@ let flashIdx = 0;
 let flashFlipped = false;
 let quizSession = null;
 let revealedPhrases = {};
-let translateState = { text:'', dir:'ko-en', showFrame:false };
+let translateState = { dir:'ko-en' };
 
 async function loadState(){
   try{
@@ -952,26 +946,21 @@ function quizHTML(){
 function papagoUrl(){
   const sk = translateState.dir==='ko-en' ? 'ko' : 'en';
   const tk = translateState.dir==='ko-en' ? 'en' : 'ko';
-  return `https://papago.naver.com/?sk=${sk}&tk=${tk}&st=${encodeURIComponent(translateState.text.trim())}`;
+  return `https://papago.naver.com/?sk=${sk}&tk=${tk}`;
 }
 
 function translatorHTML(){
   const dir = translateState.dir;
   return `
     <h2 class="section-title">Translator</h2>
-    <p class="section-sub">Type a word or sentence and translate it right here, powered by Naver Papago.</p>
     <div class="row-between">
-      <p class="section-sub" style="margin:0;">Direction</p>
+      <p class="section-sub" style="margin:0;">Powered by Naver Papago</p>
       <div class="toggle-dir">
         <button class="${dir==='ko-en'?'on':''}" id="tr-dir-ko-en">한글 → EN</button>
         <button class="${dir==='en-ko'?'on':''}" id="tr-dir-en-ko">EN → 한글</button>
       </div>
     </div>
-    <textarea id="translate-input" class="translate-box" placeholder="${dir==='ko-en' ? 'Type Korean here...' : 'Type English here...'}">${translateState.text}</textarea>
-    <div style="text-align:center; margin-top:18px;">
-      <button class="btn-main" id="open-papago">Translate</button>
-    </div>
-    ${translateState.showFrame ? `<iframe id="papago-frame" class="papago-frame" src="${papagoUrl()}" title="Naver Papago translation"></iframe>` : ''}
+    <iframe id="papago-frame" class="papago-frame" src="${papagoUrl()}" title="Naver Papago translation"></iframe>
   `;
 }
 
@@ -998,14 +987,8 @@ function wireDynamic(){
   if(g('quiz-again')) g('quiz-again').onclick = ()=>{ quizSession=null; render(); };
   if(g('quiz-replay')) g('quiz-replay').onclick = ()=>{ const q=quizSession.questions[quizSession.idx]; speakKorean(q.word.kr); };
 
-  if(g('tr-dir-ko-en')) g('tr-dir-ko-en').onclick = ()=>{ translateState.dir='ko-en'; if(translateState.showFrame) translateState.showFrame=false; render(); };
-  if(g('tr-dir-en-ko')) g('tr-dir-en-ko').onclick = ()=>{ translateState.dir='en-ko'; if(translateState.showFrame) translateState.showFrame=false; render(); };
-  if(g('translate-input')) g('translate-input').oninput = (e)=>{ translateState.text = e.target.value; };
-  if(g('open-papago')) g('open-papago').onclick = ()=>{
-    if(!translateState.text.trim()) return;
-    translateState.showFrame = true;
-    render();
-  };
+  if(g('tr-dir-ko-en')) g('tr-dir-ko-en').onclick = ()=>{ translateState.dir='ko-en'; render(); };
+  if(g('tr-dir-en-ko')) g('tr-dir-en-ko').onclick = ()=>{ translateState.dir='en-ko'; render(); };
 
   if(g('voice-select')) g('voice-select').onchange = (e)=>{ state.voiceURI = e.target.value; saveState(); };
   if(g('pitch-slider')) g('pitch-slider').oninput = (e)=>{ state.pitch = parseFloat(e.target.value); saveState(); render(); };
