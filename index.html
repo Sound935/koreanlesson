@@ -171,6 +171,14 @@
   .toggle-dir button{border:none; background:var(--paper); padding:7px 12px; font-size:12.5px; cursor:pointer; color:var(--ink-soft);}
   .toggle-dir button.on{background:var(--ink); color:var(--paper);}
 
+  /* Translator */
+  .translate-box{
+    width:100%; min-height:130px; padding:14px; border:1px solid var(--line);
+    background:var(--paper-2); color:var(--ink); font-family:'Work Sans'; font-size:15px; resize:vertical;
+  }
+  .translate-box:focus{outline:none; border-color:var(--ink-soft);}
+  .translate-note{text-align:center; font-size:12px; color:var(--ink-soft); margin-top:10px;}
+
   /* Sentences & Grammar */
   .phrase-row{
     border:1px solid var(--line); padding:14px 16px; margin-bottom:10px;
@@ -496,6 +504,7 @@ let flashIdx = 0;
 let flashFlipped = false;
 let quizSession = null;
 let revealedPhrases = {};
+let translateState = { text:'', dir:'ko-en' };
 
 async function loadState(){
   try{
@@ -675,6 +684,7 @@ function render(){
       <button data-v="sentences" class="${view==='sentences'?'active':''}">Sentences</button>
       <button data-v="grammar" class="${view==='grammar'?'active':''}">Grammar</button>
       <button data-v="quiz" class="${view==='quiz'?'active':''}">Quiz</button>
+      <button data-v="translate" class="${view==='translate'?'active':''}">Translate</button>
     </nav>
 
     <section class="${view==='dashboard'?'active':''}">${dashboardHTML(bc)}</section>
@@ -684,6 +694,7 @@ function render(){
     <section class="${view==='sentences'?'active':''}">${sentencesHTML()}</section>
     <section class="${view==='grammar'?'active':''}">${grammarHTML()}</section>
     <section class="${view==='quiz'?'active':''}">${quizHTML()}</section>
+    <section class="${view==='translate'?'active':''}">${translatorHTML()}</section>
   `;
   app.querySelectorAll('nav.tabs button').forEach(b=>{
     b.onclick = ()=> setView(b.dataset.v);
@@ -937,6 +948,26 @@ function quizHTML(){
   `;
 }
 
+function translatorHTML(){
+  const dir = translateState.dir;
+  return `
+    <h2 class="section-title">Translator</h2>
+    <p class="section-sub">Type a word or sentence, then open it in Naver Papago for a full translation.</p>
+    <div class="row-between">
+      <p class="section-sub" style="margin:0;">Direction</p>
+      <div class="toggle-dir">
+        <button class="${dir==='ko-en'?'on':''}" id="tr-dir-ko-en">한글 → EN</button>
+        <button class="${dir==='en-ko'?'on':''}" id="tr-dir-en-ko">EN → 한글</button>
+      </div>
+    </div>
+    <textarea id="translate-input" class="translate-box" placeholder="${dir==='ko-en' ? 'Type Korean here...' : 'Type English here...'}">${translateState.text}</textarea>
+    <div style="text-align:center; margin-top:18px;">
+      <button class="btn-main" id="open-papago">Translate with Naver Papago</button>
+    </div>
+    <p class="translate-note">Opens papago.naver.com in a new tab with your text pre-filled.</p>
+  `;
+}
+
 function wireDynamic(){
   const g = id => document.getElementById(id);
   if(g('theme-toggle')) g('theme-toggle').onclick = toggleTheme;
@@ -959,6 +990,18 @@ function wireDynamic(){
   if(g('start-quiz-btn')) g('start-quiz-btn').onclick = ()=>{ startQuiz(); render(); };
   if(g('quiz-again')) g('quiz-again').onclick = ()=>{ quizSession=null; render(); };
   if(g('quiz-replay')) g('quiz-replay').onclick = ()=>{ const q=quizSession.questions[quizSession.idx]; speakKorean(q.word.kr); };
+
+  if(g('tr-dir-ko-en')) g('tr-dir-ko-en').onclick = ()=>{ translateState.dir='ko-en'; render(); };
+  if(g('tr-dir-en-ko')) g('tr-dir-en-ko').onclick = ()=>{ translateState.dir='en-ko'; render(); };
+  if(g('translate-input')) g('translate-input').oninput = (e)=>{ translateState.text = e.target.value; };
+  if(g('open-papago')) g('open-papago').onclick = ()=>{
+    const text = translateState.text.trim();
+    if(!text) return;
+    const sk = translateState.dir==='ko-en' ? 'ko' : 'en';
+    const tk = translateState.dir==='ko-en' ? 'en' : 'ko';
+    const url = `https://papago.naver.com/?sk=${sk}&tk=${tk}&st=${encodeURIComponent(text)}`;
+    window.open(url, '_blank', 'noopener');
+  };
 
   if(g('voice-select')) g('voice-select').onchange = (e)=>{ state.voiceURI = e.target.value; saveState(); };
   if(g('pitch-slider')) g('pitch-slider').oninput = (e)=>{ state.pitch = parseFloat(e.target.value); saveState(); render(); };
