@@ -172,7 +172,11 @@
   .toggle-dir button.on{background:var(--ink); color:var(--paper);}
 
   /* Translator */
-  .papago-wrap{width:100%; overflow:hidden; border:1px solid var(--line); margin-top:18px; position:relative;}
+  .papago-wrap{
+    width:100vw; margin-left:calc(50% - 50vw); margin-right:calc(50% - 50vw);
+    overflow:hidden; border-top:1px solid var(--line); border-bottom:1px solid var(--line);
+    margin-top:18px; position:relative;
+  }
   .papago-frame{width:1400px; height:620px; border:none; display:block; transform-origin:top left;}
 
   /* Sentences & Grammar */
