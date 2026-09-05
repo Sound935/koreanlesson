@@ -172,7 +172,8 @@
   .toggle-dir button.on{background:var(--ink); color:var(--paper);}
 
   /* Translator */
-  .papago-frame{width:100%; height:820px; border:1px solid var(--line); margin-top:18px;}
+  .papago-wrap{width:100%; overflow:hidden; border:1px solid var(--line); margin-top:18px; position:relative;}
+  .papago-frame{width:1400px; height:620px; border:none; display:block; transform-origin:top left;}
 
   /* Sentences & Grammar */
   .phrase-row{
@@ -695,7 +696,9 @@ function render(){
     b.onclick = ()=> setView(b.dataset.v);
   });
   wireDynamic();
+  if(view==='translate') sizePapagoFrame();
 }
+window.addEventListener('resize', ()=>{ if(view==='translate') sizePapagoFrame(); });
 
 function achievementsHTML(){
   return `
@@ -960,8 +963,20 @@ function translatorHTML(){
         <button class="${dir==='en-ko'?'on':''}" id="tr-dir-en-ko">EN → 한글</button>
       </div>
     </div>
-    <iframe id="papago-frame" class="papago-frame" src="${papagoUrl()}" title="Naver Papago translation"></iframe>
+    <div class="papago-wrap" id="papago-wrap">
+      <iframe id="papago-frame" class="papago-frame" src="${papagoUrl()}" title="Naver Papago translation"></iframe>
+    </div>
   `;
+}
+
+function sizePapagoFrame(){
+  const wrap = document.getElementById('papago-wrap');
+  const frame = document.getElementById('papago-frame');
+  if(!wrap || !frame) return;
+  const nativeW = 1400, nativeH = 620;
+  const scale = wrap.clientWidth / nativeW;
+  frame.style.transform = `scale(${scale})`;
+  wrap.style.height = (nativeH * scale) + 'px';
 }
 
 function wireDynamic(){
